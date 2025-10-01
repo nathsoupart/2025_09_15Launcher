@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 4609100845738403484}
   - component: {fileID: 7392338890252617012}
   - component: {fileID: 7289595870280717997}
-  m_Layer: 0
-  m_Name: Image
+  m_Layer: 5
+  m_Name: Apklogo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1.5, y: -0}
-  m_SizeDelta: {x: 2, y: 2}
+  m_AnchoredPosition: {x: -1.1, y: -0}
+  m_SizeDelta: {x: 1, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7392338890252617012
 CanvasRenderer:
@@ -58,14 +58,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5568628}
+  m_Color: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 0.5568628}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 731e7aed8e9f540ac8bf2a7b66abdaf6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2f8349570a152884fb6cf7ebdc8c18b3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 2470038640416813941}
   - component: {fileID: 4519660497783529257}
   - component: {fileID: 5991861702739135666}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -109,8 +109,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 1.06, y: -0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.059999943, y: 0}
+  m_SizeDelta: {x: -0.07999995, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4519660497783529257
 CanvasRenderer:
@@ -142,22 +142,22 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'APK nom '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: cf10498f1ef2c2d4c9311e6b2c5146fc, type: 2}
+  m_sharedMaterial: {fileID: -722724172339014182, guid: cf10498f1ef2c2d4c9311e6b2c5146fc, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282269250
-  m_fontColor: {r: 0.2603773, g: 0.24269128, b: 0.24269128, a: 1}
-  m_enableVertexGradient: 1
+    rgba: 4284625951
+  m_fontColor: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 1}
+  m_enableVertexGradient: 0
   m_colorMode: 0
   m_fontColorGradient:
-    topLeft: {r: 0.24528301, g: 0.21011034, b: 0.21011034, a: 1}
-    topRight: {r: 0.24528301, g: 0.21011034, b: 0.21011034, a: 1}
-    bottomLeft: {r: 0.24528301, g: 0.21011034, b: 0.21011034, a: 1}
-    bottomRight: {r: 0.24528301, g: 0.21011034, b: 0.21011034, a: 1}
+    topLeft: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 1}
+    topRight: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 1}
+    bottomLeft: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 1}
+    bottomRight: {r: 0.12156863, g: 0.20392157, b: 0.38431373, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
@@ -167,14 +167,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 1
-  m_fontSizeBase: 1
+  m_fontSize: 0.5
+  m_fontSizeBase: 0.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
   m_fontStyle: 0
-  m_HorizontalAlignment: 32
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -223,7 +223,9 @@ GameObject:
   - component: {fileID: 4414160380565049543}
   - component: {fileID: 1428314107139835128}
   - component: {fileID: 5452327093728561088}
-  m_Layer: 0
+  - component: {fileID: 5010096592857973535}
+  - component: {fileID: 5424307830882732976}
+  m_Layer: 5
   m_Name: Apk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -239,7 +241,7 @@ RectTransform:
   m_GameObject: {fileID: 5314257963925215397}
   m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0.1}
-  m_LocalScale: {x: 0.7914, y: 0.7914, z: 0.7914}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2470038640416813941}
@@ -258,7 +260,7 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5314257963925215397}
-  m_CullTransparentMesh: 1
+  m_CullTransparentMesh: 0
 --- !u!114 &1428314107139835128
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,14 +274,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.8313726, g: 0.82745105, b: 0.83921576, a: 1}
+  m_Color: {r: 0.9137255, g: 0.27058825, b: 0.49411765, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: 98e8e1cf8dc7dbf469617c2e40c8a944, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -310,10 +312,10 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.59682435, g: 0.6349142, b: 0.6377357, a: 0.3019608}
-    m_HighlightedColor: {r: 0.85098386, g: 0.9056604, b: 0.39644003, a: 1}
-    m_PressedColor: {r: 0.91320753, g: 0.14128876, b: 0.14128876, a: 1}
-    m_SelectedColor: {r: 0.71450335, g: 0.96603775, b: 0.95308095, a: 1}
+    m_NormalColor: {r: 0.96262014, g: 0.9794492, b: 0.9811321, a: 0.3019608}
+    m_HighlightedColor: {r: 0.9466924, g: 0.95094335, b: 0.91147023, a: 1}
+    m_PressedColor: {r: 0.8392157, g: 0.16470589, b: 0.3529412, a: 1}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -332,16 +334,44 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1428314107139835128}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: Play, Assembly-CSharp
-        m_MethodName: LancerAutreAppli
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 1
+      m_Calls: []
+--- !u!114 &5010096592857973535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5314257963925215397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07b3638c2f5db5b479ff24c2859713d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PokeFollowTransform: {fileID: 0}
+  m_SmoothingSpeed: 16
+  m_ReturnToInitialPosition: 1
+  m_ApplyIfChildIsTarget: 1
+  m_ClampToMaxDistance: 1
+  m_MaxDistance: 20
+  m_PokeFilter: {fileID: 0}
+--- !u!65 &5424307830882732976
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5314257963925215397}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
