@@ -22,7 +22,7 @@ public class DetectApk : MonoBehaviour
     public GameObject buttonPrefab;
     public Transform buttonsParent;
     public GameObject infoPanel;
-    public GameObject panelApk;
+    public GameObject PanelApk;
     public TextMeshProUGUI infoText;
     public Button playButton;      // Bouton "Play" dans le panel info
     public Image infoIcon;         // Icône affichée dans le panel info
@@ -54,10 +54,10 @@ public class DetectApk : MonoBehaviour
         }
 
         // Panel APK actif et parent des boutons
-        if (panelApk != null)
+        if (PanelApk != null)
         {
-            panelApk.SetActive(true);
-            buttonsParent = panelApk.transform;
+            PanelApk.SetActive(true);
+            buttonsParent = PanelApk.transform;
             Debug.Log("[AppLauncher] panelApk is active and buttonsParent assigned");
         }
         else
