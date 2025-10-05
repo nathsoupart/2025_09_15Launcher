@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using System.IO;
-using TMPro;
 using UnityEngine;
+using TMPro;
 using UnityEngine.UI;
 using UnityEngine.Android;
+using System.IO;
 
 public class DetectApk : MonoBehaviour
 {
@@ -12,20 +12,18 @@ public class DetectApk : MonoBehaviour
     {
         public string packageName;
         public string appName;
+        [System.NonSerialized]
         public Sprite appIcon;
         public string apkFilePath;
     }
 
     [Header("UI References")]
-    public Sprite defaultSprite;  // à assigner depuis l'inspecteur Unity
-
+    public Sprite defaultSprite;  
     public GameObject buttonPrefab;
-    public Transform buttonsParent;
-    public GameObject infoPanel;
-    public GameObject PanelApk;
+    public Transform buttonsParent; 
     public TextMeshProUGUI infoText;
-    public Button playButton;      // Bouton "Play" dans le panel info
-    public Image infoIcon;         // Icône affichée dans le panel info
+    public Button playButton;
+    public Image infoIcon;
 
     [Header("Settings")]
     public bool skipSystemApps = true;
@@ -35,45 +33,13 @@ public class DetectApk : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("[AppLauncher] Start called");
-
-        // Panel info actif dès le début
-        if (infoPanel != null)
-        {
-            infoPanel.SetActive(true);
-            infoText.text = "Sélectionnez une app pour voir les détails.";
-            if (infoIcon != null) 
-            {
-                infoIcon.sprite = defaultSprite;
-                Debug.Log("[AppLauncher] Info icon set to default sprite");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[AppLauncher] infoPanel n'est pas assigné !");
-        }
-
-        // Panel APK actif et parent des boutons
-        if (PanelApk != null)
-        {
-            PanelApk.SetActive(true);
-            buttonsParent = PanelApk.transform;
-            Debug.Log("[AppLauncher] panelApk is active and buttonsParent assigned");
-        }
-        else
-        {
-            Debug.LogWarning("[AppLauncher] panelApk n'est pas assigné !");
-        }
-
         CheckStoragePermission();
     }
 
     void CheckStoragePermission()
     {
-        Debug.Log("[AppLauncher] Checking storage permission");
         if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
         {
-            Debug.Log("[AppLauncher] Storage permission not granted. Requesting...");
             var callbacks = new PermissionCallbacks();
             callbacks.PermissionGranted += (perm) =>
             {
@@ -94,81 +60,59 @@ public class DetectApk : MonoBehaviour
         }
     }
 
-    void OnApplicationFocus(bool hasFocus)
-    {
-        Debug.Log("[AppLauncher] OnApplicationFocus: " + hasFocus);
-        if (hasFocus)
-        {
-            RefreshApps();
-        }
-    }
-
     public void RefreshApps()
     {
-        Debug.Log("[AppLauncher] RefreshApps called");
         apps.Clear();
         ClearButtons();
 
         List<AppInfo> installedApps = GetInstalledApps();
         List<AppInfo> apkFiles = GetApkFilesFromPrivateFolder();
 
-        Debug.Log("[AppLauncher] Installed apps found: " + installedApps.Count);
-        Debug.Log("[AppLauncher] APK files found in private folder: " + apkFiles.Count);
-
         apps.AddRange(installedApps);
         apps.AddRange(apkFiles);
 
-        Debug.Log("[AppLauncher] Total apps to show: " + apps.Count);
+        Debug.Log("[AppLauncher] Total apps found: " + apps.Count);
+        foreach (var app in apps)
+            Debug.Log("[AppLauncher] App: " + app.appName + " (" + app.packageName + ")");
 
         CreateButtons();
-
-        Debug.Log("[AppLauncher] RefreshApps complete. Total buttons created: " + (buttonsParent != null ? buttonsParent.childCount : 0));
     }
 
     void ClearButtons()
     {
-        if (buttonsParent == null)
-        {
-            Debug.LogWarning("[AppLauncher] ClearButtons: buttonsParent is null");
-            return;
-        }
-        Debug.Log("[AppLauncher] Clearing buttons");
-        for (int i = buttonsParent.childCount - 1; i >= 0; i--)
-        {
-            Destroy(buttonsParent.GetChild(i).gameObject);
-        }
+        foreach (Transform child in buttonsParent)
+            Destroy(child.gameObject);
     }
 
     List<AppInfo> GetInstalledApps()
     {
-        Debug.Log("[AppLauncher] GetInstalledApps called");
         List<AppInfo> list = new List<AppInfo>();
-
-#if UNITY_ANDROID && !UNITY_EDITOR
+        #if UNITY_ANDROID && !UNITY_EDITOR
         try
         {
-            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             {
-                var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                var pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
-                var appsObj = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
-                int size = appsObj.Call<int>("size");
-                Debug.Log("[AppLauncher] Number of installed apps = " + size);
-
+                AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                AndroidJavaObject pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
+                AndroidJavaObject apps = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
+                int size = apps.Call<int>("size");
                 for (int i = 0; i < size; i++)
                 {
-                    var appInfoObj = appsObj.Call<AndroidJavaObject>("get", i);
+                    AndroidJavaObject appInfoObj = apps.Call<AndroidJavaObject>("get", i);
                     string packageName = appInfoObj.Get<string>("packageName");
                     int flags = appInfoObj.Get<int>("flags");
                     bool isSystem = (flags & 1) != 0;
-                    if (skipSystemApps && isSystem) continue;
+                    if (skipSystemApps && isSystem)
+                    {
+                        Debug.Log("[AppLauncher] Ignoring system app: " + packageName);
+                        continue;
+                    }
 
                     string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
+                    Sprite iconSprite = GetAppIconSprite(packageName);
 
+                    list.Add(new AppInfo { packageName = packageName, appName = appName, appIcon = iconSprite });
                     Debug.Log("[AppLauncher] Found app: " + appName + " (" + packageName + ") System: " + isSystem);
-
-                    Sprite icon = null; // Optionnel via plugin natif
-                    list.Add(new AppInfo { packageName = packageName, appName = appName, appIcon = icon });
                 }
             }
         }
@@ -176,27 +120,20 @@ public class DetectApk : MonoBehaviour
         {
             Debug.LogError("[AppLauncher] Exception in GetInstalledApps: " + e.Message);
         }
-#else
-        Debug.Log("[AppLauncher] GetInstalledApps skipped - not running on Android device");
-#endif
+        #endif
         return list;
     }
 
     List<AppInfo> GetApkFilesFromPrivateFolder()
     {
-        Debug.Log("[AppLauncher] GetApkFilesFromPrivateFolder called");
         List<AppInfo> list = new List<AppInfo>();
         string folder = Application.persistentDataPath;
-        Debug.Log("[AppLauncher] Checking folder: " + folder);
-
         if (Directory.Exists(folder))
         {
             string[] files = Directory.GetFiles(folder, "*.apk");
-            Debug.Log("[AppLauncher] APK files count in folder: " + files.Length);
             foreach (var f in files)
             {
                 string name = Path.GetFileName(f);
-                Debug.Log("[AppLauncher] Found APK file: " + name);
                 list.Add(new AppInfo { packageName = null, appName = name, appIcon = null, apkFilePath = f });
             }
         }
@@ -209,95 +146,66 @@ public class DetectApk : MonoBehaviour
 
     void CreateButtons()
     {
-        if (buttonsParent == null)
-        {
-            Debug.LogWarning("[AppLauncher] CreateButtons: buttonsParent is null");
-            return;
-        }
-        if (buttonPrefab == null)
-        {
-            Debug.LogError("[AppLauncher] CreateButtons: buttonPrefab is not assigned!");
-            return;
-        }
-
-        Debug.Log("[AppLauncher] Creating buttons for apps count: " + apps.Count);
         foreach (var app in apps)
         {
-            Debug.Log("[AppLauncher] Creating button for app: " + app.appName);
-
-            // Instanciation du bouton dans panelApk
-            GameObject btnObj = Instantiate(buttonPrefab, buttonsParent, false);
-
-            // Nom sur le bouton
-            Text t = btnObj.GetComponentInChildren<Text>();
-            if (t != null)
-            {
-                t.text = app.appName;
-                Debug.Log("[AppLauncher] Button text set to: " + app.appName);
-            }
+            GameObject btnObj = Instantiate(buttonPrefab, buttonsParent);
+            var textMesh = btnObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (textMesh != null)
+                textMesh.text = app.appName;
             else
-            {
-                Debug.LogWarning("[AppLauncher] Button child Text component not found");
-            }
+                Debug.LogWarning("[AppLauncher] TMP Text component not found on button prefab");
 
-            // Icône sur le bouton (si existante)
-            Image img = btnObj.GetComponentInChildren<Image>();
+            var img = btnObj.GetComponentInChildren<Image>();
             if (img != null)
-            {
-                if (app.appIcon != null)
-                {
-                    img.sprite = app.appIcon;
-                    Debug.Log("[AppLauncher] Button icon set");
-                }
-                else
-                {
-                    Debug.Log("[AppLauncher] No icon available for app: " + app.appName);
-                }
-            }
+                img.sprite = app.appIcon != null ? app.appIcon : defaultSprite;
             else
-            {
-                Debug.LogWarning("[AppLauncher] Button child Image component not found");
-            }
+                Debug.LogWarning("[AppLauncher] Image component not found on button prefab");
 
-            // Clic pour afficher infos dans le panel info
-            Button b = btnObj.GetComponent<Button>();
-            if (b != null)
+            Button btnComp = btnObj.GetComponent<Button>();
+            if (btnComp != null)
             {
-                AppInfo copy = app;
-                b.onClick.AddListener(() => OnAppButtonClicked(copy));
-                Debug.Log("[AppLauncher] Listener added to button for app: " + app.appName);
+                AppInfo appRef = app;
+                btnComp.onClick.AddListener(() => OnAppButtonClicked(appRef));
             }
             else
+                Debug.LogWarning("[AppLauncher] Button component not found on button prefab");
+        }
+    }
+
+    Sprite GetAppIconSprite(string packageName)
+    {
+        #if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var jc = new AndroidJavaClass("com.yourcompany.iconfetcher.IconFetcher"))
             {
-                Debug.LogWarning("[AppLauncher] Button component not found on prefab");
+                using (var context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+                {
+                    byte[] iconBytes = jc.CallStatic<byte[]>("getAppIcon", packageName, context);
+                    if (iconBytes != null && iconBytes.Length > 0)
+                    {
+                        Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                        tex.LoadImage(iconBytes);
+                        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    }
+                }
             }
         }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning("[AppLauncher] Failed to get icon for " + packageName + " : " + e.Message);
+        }
+        #endif
+        return null;
     }
 
     void OnAppButtonClicked(AppInfo app)
     {
         selectedApp = app;
-        Debug.Log("[AppLauncher] OnAppButtonClicked: " + app.appName);
-
-        string info = $"Name: {app.appName}\nPackage: {app.packageName ?? "N/A"}\nAPK Path: {app.apkFilePath ?? "N/A"}";
-        infoText.text = info;
+        if (infoText != null)
+            infoText.text = $"Nom: {app.appName}\nPackage: {app.packageName ?? "N/A"}\nAPK Path: {app.apkFilePath ?? "N/A"}";
 
         if (infoIcon != null)
-        {
-            if (app.appIcon != null)
-            {
-                infoIcon.sprite = app.appIcon;
-                Debug.Log("[AppLauncher] infoIcon set to app icon");
-            }
-            else
-            {
-                infoIcon.sprite = defaultSprite;
-                Debug.Log("[AppLauncher] infoIcon set to default sprite");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[AppLauncher] infoIcon is not assigned");
-        }
+            infoIcon.sprite = app.appIcon != null ? app.appIcon : defaultSprite;
     }
 }
