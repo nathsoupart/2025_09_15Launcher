@@ -155,11 +155,19 @@ public class DetectApk : MonoBehaviour
             else
                 Debug.LogWarning("[AppLauncher] TMP Text component not found on button prefab");
 
-            var img = btnObj.GetComponentInChildren<Image>();
-            if (img != null)
-                img.sprite = app.appIcon != null ? app.appIcon : defaultSprite;
+            var iconTransform = btnObj.transform.Find("Icon");
+            if (iconTransform != null)
+            {
+                var img = iconTransform.GetComponent<Image>();
+                if (img != null)
+                    img.sprite = app.appIcon != null ? app.appIcon : defaultSprite;
+                else
+                    Debug.LogWarning("[AppLauncher] 'Icon' GameObject found but no Image component attached");
+            }
             else
-                Debug.LogWarning("[AppLauncher] Image component not found on button prefab");
+            {
+                Debug.LogWarning("[AppLauncher] 'Icon' GameObject not found under button");
+            }
 
             Button btnComp = btnObj.GetComponent<Button>();
             if (btnComp != null)
