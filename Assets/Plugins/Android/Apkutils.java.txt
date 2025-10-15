@@ -1,0 +1,54 @@
+package com.yourcompany.apputils;
+
+import android.content.pm.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
+import android.content.Context;
+import android.util.Log;
+
+public class ApkUtils {
+    private static final String TAG = "ApkUtils";
+
+    public static Bitmap getApkIcon(String apkPath, Context context) {
+        Log.d(TAG, "getApkIcon() → " + apkPath);
+
+        if (apkPath == null) return null;
+        try {
+            PackageManager pm = context.getPackageManager();
+            PackageInfo pi = pm.getPackageArchiveInfo(apkPath, 0);
+            if (pi == null) {
+                Log.w(TAG, "PackageArchiveInfo null");
+                return null;
+            }
+
+            pi.applicationInfo.sourceDir = apkPath;
+            pi.applicationInfo.publicSourceDir = apkPath;
+            Drawable icon = pm.getApplicationIcon(pi.applicationInfo);
+
+            if (icon instanceof BitmapDrawable) {
+                return ((BitmapDrawable) icon).getBitmap();
+            } else {
+                Log.w(TAG, "Icon n’est pas un BitmapDrawable");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erreur getApkIcon : " + e);
+        }
+        return null;
+    }
+
+    public static Bitmap getAppIcon(String packageName, Context context) {
+        Log.d(TAG, "getAppIcon() → " + packageName);
+
+        try {
+            PackageManager pm = context.getPackageManager();
+            ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
+            Drawable icon = pm.getApplicationIcon(ai);
+            if (icon instanceof BitmapDrawable) {
+                return ((BitmapDrawable) icon).getBitmap();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Erreur getAppIcon : " + e);
+        }
+        return null;
+    }
+}
