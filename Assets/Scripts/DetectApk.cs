@@ -1,20 +1,36 @@
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
-using UnityEngine.Android;
 using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using UnityEngine.Android;
 
-public class DetectApk : MonoBehaviour
+public class DetectApkLauncher : MonoBehaviour
 {
     [System.Serializable]
     public class AppInfo
     {
         public string packageName;
         public string appName;
-        [System.NonSerialized]
-        public Sprite appIcon;
+        [System.NonSerialized] public Sprite appIcon;
         public string apkFilePath;
+        public string description;
+        public string previewImage;
+    }
+
+    [System.Serializable]
+    public class AppDataEntry
+    {
+        public string packageName;
+        public string description;
+        public string previewImage;
+    }
+
+    [System.Serializable]
+    private class AppDataWrapper
+    {
+        public AppDataEntry[] entries;
     }
 
     [Header("UI References")]
@@ -23,118 +39,222 @@ public class DetectApk : MonoBehaviour
     public Transform buttonsParent;
     public TextMeshProUGUI infoText;
     public Button playButton;
-    public Image infoIcon;
+    public Image infoIcon;       // icône de l’appli
+    public Image previewImageUI; // image de preview du JSON
+
 
     [Header("Settings")]
     public bool skipSystemApps = true;
-
+    
+    
+   
     private List<AppInfo> apps = new List<AppInfo>();
+    private List<AppDataEntry> appDataEntries = new List<AppDataEntry>();
     private AppInfo selectedApp = null;
     private bool appJustLaunched = false;
 
     void Start()
     {
-        Debug.Log("[AppLauncher] Start appelée");
+        Debug.Log("[Launcher] Start appelée");
+
+        // Copier JSON + images depuis StreamingAssets
+        CopyStreamingAssetsToPersistent();
+
+        // Charger JSON
+        LoadAppDataJson();
+
+        // Vérifier permission stockage et détecter APK
         CheckStoragePermission();
 
         if (playButton != null)
             playButton.onClick.AddListener(OnPlayButtonClicked);
     }
 
+    #region StreamingAssets Copy
+    void CopyStreamingAssetsToPersistent()
+    {
+        string sourceFolder = Application.streamingAssetsPath;
+        string targetFolder = Application.persistentDataPath;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        StartCoroutine(CopyFolderAndroid(sourceFolder, targetFolder));
+#else
+        CopyFolderStandalone(sourceFolder, targetFolder);
+#endif
+    }
+
+    void CopyFolderStandalone(string sourceFolder, string targetFolder)
+    {
+        if (!Directory.Exists(sourceFolder)) return;
+        foreach (string filePath in Directory.GetFiles(sourceFolder))
+        {
+            string fileName = Path.GetFileName(filePath);
+            string destPath = Path.Combine(targetFolder, fileName);
+            if (!File.Exists(destPath))
+                File.Copy(filePath, destPath, true);
+        }
+        Debug.Log("[Launcher] StreamingAssets copiés dans persistentDataPath");
+    }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    IEnumerator CopyFolderAndroid(string sourceFolder, string targetFolder)
+    {
+        if (!Directory.Exists(targetFolder))
+            Directory.CreateDirectory(targetFolder);
+
+        string[] files = { "appdata.json", "demoa_preview.png", "demob_preview.png","mylauncher_preview.png"}; // liste des fichiers à copier
+        foreach (string fileName in files)
+        {
+            string srcPath = Path.Combine(sourceFolder, fileName);
+            string dstPath = Path.Combine(targetFolder, fileName);
+            if (!File.Exists(dstPath))
+            {
+                using (var www = new UnityEngine.Networking.UnityWebRequest(srcPath))
+                {
+                    www.downloadHandler = new UnityEngine.Networking.DownloadHandlerBuffer();
+                    yield return www.SendWebRequest();
+
+                    if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                    {
+                        File.WriteAllBytes(dstPath, www.downloadHandler.data);
+                        Debug.Log($"[Launcher] Copié {fileName} vers persistentDataPath");
+                    }
+                    else
+                        Debug.LogWarning($"[Launcher] Impossible de copier {fileName}: {www.error}");
+                }
+            }
+        }
+    }
+#endif
+    #endregion
+
+    #region JSON Loading
+    void LoadAppDataJson()
+    {
+        string jsonPath = Path.Combine(Application.persistentDataPath, "appdata.json");
+        if (File.Exists(jsonPath))
+        {
+            string jsonText = File.ReadAllText(jsonPath);
+            appDataEntries = new List<AppDataEntry>(JsonUtility.FromJson<AppDataWrapper>("{\"entries\":" + jsonText + "}").entries);
+            Debug.Log($"[Launcher] JSON chargé : {appDataEntries.Count} entrées");
+        }
+        else
+        {
+            Debug.LogWarning("[Launcher] JSON appdata.json introuvable !");
+        }
+    }
+    #endregion
+
+    #region Permissions
     void CheckStoragePermission()
     {
-        Debug.Log("[AppLauncher] Vérification permission stockage");
+        Debug.Log("[Launcher] Vérification permission stockage");
         if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
         {
             var callbacks = new PermissionCallbacks();
             callbacks.PermissionGranted += (perm) =>
             {
-                Debug.Log("[AppLauncher] Permission stockage accordée");
+                Debug.Log("[Launcher] Permission stockage accordée");
                 RefreshApps();
             };
             callbacks.PermissionDenied += (perm) =>
             {
-                Debug.LogWarning("[AppLauncher] Permission stockage refusée");
+                Debug.LogWarning("[Launcher] Permission stockage refusée");
                 RefreshApps();
             };
             Permission.RequestUserPermission(Permission.ExternalStorageRead, callbacks);
         }
         else
         {
-            Debug.Log("[AppLauncher] Permission stockage déjà accordée");
+            Debug.Log("[Launcher] Permission stockage déjà accordée");
             RefreshApps();
         }
     }
+    #endregion
 
+    #region APK Detection
     public void RefreshApps()
     {
-        Debug.Log("[AppLauncher] RefreshApps appelée");
+        Debug.Log("[Launcher] RefreshApps appelée");
         apps.Clear();
         ClearButtons();
 
         apps.AddRange(GetInstalledApps());
         apps.AddRange(GetApkFilesFromPrivateFolder());
 
-        Debug.Log($"[AppLauncher] {apps.Count} apps trouvées au total.");
+        // Associer JSON + image preview (sans écraser l'icône réelle)
+        foreach (var app in apps)
+        {
+            var data = appDataEntries.Find(e => e.packageName == app.packageName || e.packageName == app.appName);
+            if (data != null)
+            {
+                app.description = data.description;
+                app.previewImage = data.previewImage;
 
-        // 🔹 Log détaillé de toutes les apps trouvées
-        foreach (var a in apps)
-            Debug.Log($"[RefreshApps] {a.appName} | pkg={a.packageName ?? "null"} | path={a.apkFilePath ?? "null"}");
+                if (!string.IsNullOrEmpty(data.previewImage))
+                {
+                    string imgPath = Path.Combine(Application.persistentDataPath, data.previewImage);
+                    if (File.Exists(imgPath))
+                    {
+                        Debug.Log($"[Launcher] Preview trouvée pour {app.appName}: {imgPath}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Launcher] Preview introuvable pour {app.appName}: {imgPath}");
+                    }
+                }
+            }
+        }
 
+        Debug.Log($"[Launcher] {apps.Count} apps détectées au total.");
         CreateButtons();
     }
 
+
     void ClearButtons()
     {
-        Debug.Log("[AppLauncher] Nettoyage des anciens boutons UI");
         foreach (Transform child in buttonsParent)
             Destroy(child.gameObject);
     }
 
     List<AppInfo> GetInstalledApps()
     {
-        Debug.Log("[AppLauncher] Récupération apps installées");
         List<AppInfo> list = new List<AppInfo>();
 #if UNITY_ANDROID && !UNITY_EDITOR
         try
         {
             using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
             {
-                AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                AndroidJavaObject pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
-                AndroidJavaObject appsList = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
+                var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+                var pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
+                var appsList = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
                 int size = appsList.Call<int>("size");
-                Debug.Log($"[AppLauncher] {size} apps installées détectées");
 
                 for (int i = 0; i < size; i++)
                 {
-                    AndroidJavaObject appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
+                    var appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
                     string packageName = appInfoObj.Get<string>("packageName");
                     if (string.IsNullOrEmpty(packageName)) continue;
-
-                    // 🔹 Filtrage strict : uniquement les apps contenant "leclick"
-                    if (!packageName.ToLower().Contains("leclick"))
-                        continue;
+                    if (!packageName.ToLower().Contains("leclick")) continue;
 
                     string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
                     Sprite iconSprite = GetAppIconSprite(packageName);
-                    Debug.Log($"[GetInstalledApps] App retenue: {appName} [{packageName}]");
 
-                    var newApp = new AppInfo
+                    list.Add(new AppInfo
                     {
                         packageName = packageName,
                         appName = appName,
                         appIcon = iconSprite,
                         apkFilePath = null
-                    };
-                    Debug.Log($"[GetInstalledApps] App ajoutée: {newApp.appName} | package={newApp.packageName} | apkFilePath=NULL (installée)");
-                    list.Add(newApp);
+                    });
+
+                    Debug.Log($"[GetInstalledApps] App ajoutée: {appName} ({packageName})");
                 }
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[AppLauncher] Erreur GetInstalledApps : " + e.Message);
+            Debug.LogError("[Launcher] Erreur GetInstalledApps : " + e);
         }
 #endif
         return list;
@@ -142,63 +262,46 @@ public class DetectApk : MonoBehaviour
 
     List<AppInfo> GetApkFilesFromPrivateFolder()
     {
-        Debug.Log("[AppLauncher] Recherche APK dans dossier privé");
         List<AppInfo> list = new List<AppInfo>();
         string folder = Application.persistentDataPath;
-
-        Debug.Log($"[AppLauncher] Dossier de recherche: {folder}");
 
         if (Directory.Exists(folder))
         {
             string[] files = Directory.GetFiles(folder, "*.apk");
-            Debug.Log($"[AppLauncher] {files.Length} fichiers APK trouvés dans {folder}");
-
             foreach (var f in files)
             {
                 string name = Path.GetFileNameWithoutExtension(f);
-                // 🔹 Filtrage strict : seulement les fichiers contenant "leclick"
-                if (!name.ToLower().Contains("leclick"))
-                    continue;
+                if (!name.ToLower().Contains("leclick")) continue;
 
-                Debug.Log($"[GetApkFilesFromPrivateFolder] APK retenu: {name} | chemin={f}");
                 list.Add(new AppInfo
                 {
                     packageName = null,
                     appName = name,
-                    appIcon = null,
-                    apkFilePath = f
+                    apkFilePath = f,
+                    appIcon = null
                 });
+
+                Debug.Log($"[GetApkFiles] APK trouvée: {name} ({f})");
             }
-        }
-        else
-        {
-            Debug.LogWarning("[AppLauncher] Dossier privé apk non trouvé");
         }
         return list;
     }
+    #endregion
 
+    #region UI
     void CreateButtons()
     {
-        Debug.Log("[AppLauncher] Création boutons UI");
-
         foreach (var app in apps)
         {
-            Debug.Log($"[CreateButtons] Création bouton pour {app.appName} | pkg={app.packageName ?? "null"} | path={app.apkFilePath ?? "null"}");
-
             GameObject btnObj = Instantiate(buttonPrefab, buttonsParent);
             var textMesh = btnObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (textMesh != null)
-                textMesh.text = app.appName;
+            if (textMesh != null) textMesh.text = app.appName;
 
             var iconTransform = btnObj.transform.Find("Icon");
             if (iconTransform != null)
             {
                 var img = iconTransform.GetComponent<Image>();
-                if (img != null)
-                {
-                    img.sprite = app.appIcon ?? defaultSprite;
-                    Debug.Log($"[Button] appIcon pour {app.appName}: {(app.appIcon != null ? "OK" : "NULL")}");
-                }
+                if (img != null) img.sprite = app.appIcon ?? defaultSprite;
             }
 
             Button btnComp = btnObj.GetComponent<Button>();
@@ -210,76 +313,73 @@ public class DetectApk : MonoBehaviour
         }
     }
 
+    void OnAppSelected(AppInfo app)
+    {
+        selectedApp = app;
+        infoText.text = $"Nom: {app.appName}\nPackage: {app.packageName ?? "N/A"}\n\nDescription:\n{app.description ?? "Aucune"}";
+
+        infoIcon.sprite = app.appIcon ?? defaultSprite;
+       
+            Debug.Log($"[OnAppSelected] Sélection : {app.appName} | Package: {app.packageName}");
+            Debug.Log($"[OnAppSelected] Description = {(app.description ?? "null")}, Preview = {(app.previewImage ?? "null")}");
+            Debug.Log($"[OnAppSelected] infoText={(infoText != null)}, infoIcon={(infoIcon != null)}, previewImageUI={(previewImageUI != null)}");
+
+
+        Debug.Log($"[OnAppSelected] {app.appName} sélectionnée | description={app.description ?? "null"} | image={app.previewImage ?? "null"}");
+        if (!string.IsNullOrEmpty(app.previewImage))
+        {
+            string imgPath = Path.Combine(Application.persistentDataPath, app.previewImage);
+            if (File.Exists(imgPath))
+            {
+                byte[] bytes = File.ReadAllBytes(imgPath);
+                Texture2D tex = new Texture2D(2, 2);
+                if (tex.LoadImage(bytes))
+                    previewImageUI.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+            else
+            {
+                Debug.LogWarning($"[OnAppSelected] Preview non trouvée : {imgPath}");
+                previewImageUI.sprite = defaultSprite;
+            }
+        }
+        else
+        {
+            previewImageUI.sprite = defaultSprite; // placeholder si pas d'image
+        }
+    }
+
     Sprite GetAppIconSprite(string packageName)
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
-        Debug.Log($"[Icon] Start GetAppIconSprite pour {packageName}");
         try
         {
             using (var jc = new AndroidJavaClass("be.leclick.iconfetcher.IconFetcher"))
             {
-                Debug.Log("[Icon] AndroidJavaClass loaded");
-                using (var context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
+                var context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
+                byte[] iconBytes = jc.CallStatic<byte[]>("getAppIcon", packageName, context);
+                if (iconBytes != null && iconBytes.Length > 0)
                 {
-                    Debug.Log("[Icon] Context récupéré");
-                    byte[] iconBytes = jc.CallStatic<byte[]>("getAppIcon", packageName, context);
-                    if (iconBytes == null)
-                    {
-                        Debug.LogWarning($"[Icon] getAppIcon RX null pour {packageName}");
-                    }
-                    else if (iconBytes.Length == 0)
-                    {
-                        Debug.LogWarning($"[Icon] getAppIcon RX vide pour {packageName}");
-                    }
-                    else
-                    {
-                        Debug.Log($"[Icon] Bytes reçus ({iconBytes.Length}) pour {packageName}");
-                        Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                        if (tex.LoadImage(iconBytes))
-                        {
-                            Debug.Log("[Icon] Texture chargée OK");
-                            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                            Debug.Log("[Icon] Sprite créé OK");
-                            return sprite;
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[Icon] LoadImage échec");
-                        }
-                    }
+                    Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (tex.LoadImage(iconBytes))
+                        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 }
             }
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[Icon] Exception: " + e);
+            Debug.LogWarning("[GetAppIconSprite] Exception: " + e);
         }
 #endif
-        Debug.Log("[Icon] Fin GetAppIconSprite → null");
         return null;
-    }
-
-    void OnAppSelected(AppInfo app)
-    {
-        Debug.Log($"[OnAppSelected] Sélection de {app.appName}");
-        Debug.Log($"[OnAppSelected] packageName = {(app.packageName ?? "null")}");
-        Debug.Log($"[OnAppSelected] apkFilePath = {(app.apkFilePath ?? "null")}");
-
-        selectedApp = app;
-        infoText.text = $"Nom: {app.appName}\nPackage: {app.packageName ?? "N/A"}\nAPK Path: {app.apkFilePath ?? "N/A"}";
-        infoIcon.sprite = app.appIcon ?? defaultSprite;
-        Debug.Log($"[Select] infoIcon sprite pour {app.appName}: {(app.appIcon != null ? "ICON OK" : "DEF Sprite")}");
     }
 
     void OnPlayButtonClicked()
     {
         if (selectedApp == null)
         {
-            Debug.LogWarning("[AppLauncherPlay] Aucun app sélectionnée !");
+            Debug.LogWarning("[LauncherPlay] Aucune app sélectionnée !");
             return;
         }
-
-        Debug.Log($"[AppLauncherPlay] Lancement demandé pour {selectedApp.appName} | pkg={selectedApp.packageName ?? "null"} | path={selectedApp.apkFilePath ?? "null"}");
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
@@ -292,16 +392,10 @@ public class DetectApk : MonoBehaviour
                     var pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
                     var intent = pm.Call<AndroidJavaObject>("getLaunchIntentForPackage", selectedApp.packageName);
                     if (intent != null)
-                    {
-                        Debug.Log($"[AppLauncherPlay] Lancement package : {selectedApp.packageName}");
                         currentActivity.Call("startActivity", intent);
-                    }
-                    else
-                        Debug.LogWarning("[AppLauncherPlay] Impossible de trouver l’intent pour " + selectedApp.packageName);
                 }
                 else if (!string.IsNullOrEmpty(selectedApp.apkFilePath))
                 {
-                    Debug.Log($"[AppLauncherPlay] Tentative d’ouverture APK : {selectedApp.apkFilePath}");
                     var intent = new AndroidJavaObject("android.content.Intent", "android.intent.action.VIEW");
                     var uriClass = new AndroidJavaClass("android.net.Uri");
                     var fileObj = new AndroidJavaObject("java.io.File", selectedApp.apkFilePath);
@@ -313,36 +407,12 @@ public class DetectApk : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError("[AppLauncherPlay] Erreur lancement : " + e.Message);
+                Debug.LogError("[LauncherPlay] Erreur lancement : " + e);
             }
         }
 #else
-        Debug.Log($"[AppLauncherPlay] Simulation lancement : {selectedApp.appName}");
+        Debug.Log($"[LauncherPlay] Simulation lancement : {selectedApp.appName}");
 #endif
     }
-
-    void OnApplicationFocus(bool hasFocus)
-    {
-        if (hasFocus && appJustLaunched)
-        {
-            Debug.Log("[AppLauncher] Retour depuis l’app lancée → relance du launcher");
-            appJustLaunched = false;
-            RefreshApps();
-        }
-    }
-
-    void OnApplicationPause(bool pauseStatus)
-    {
-        if (pauseStatus)
-        {
-            Debug.Log("[AppLauncher] Application mise en pause (autre app ouverte)");
-        }
-    }
-
-    public void OnExternalAppClosed(string msg)
-    {
-        Debug.Log("[AppLauncher] L'app externe a été fermée — retour automatique au launcher !");
-        appJustLaunched = false;
-        RefreshApps();
-    }
+    #endregion
 }
