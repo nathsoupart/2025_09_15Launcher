@@ -85,67 +85,72 @@ public class DetectApk : MonoBehaviour
             Destroy(child.gameObject);
     }
 
-    List<AppInfo> GetInstalledApps()
-    {
-        Debug.Log("[AppLauncher] Récupération apps installées");
-        List<AppInfo> list = new List<AppInfo>();
+   List<AppInfo> GetInstalledApps()
+{
+    Debug.Log("[AppLauncher] Récupération apps installées");
+    List<AppInfo> list = new List<AppInfo>();
 #if UNITY_ANDROID && !UNITY_EDITOR
-        try
-        {
-            using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-            {
-                AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-                AndroidJavaObject pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
-                AndroidJavaObject appsList = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
-                int size = appsList.Call<int>("size");
-                Debug.Log($"[AppLauncher] {size} apps installées détectées");
-
-                for (int i = 0; i < size; i++)
-                {
-                    AndroidJavaObject appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
-                    string packageName = appInfoObj.Get<string>("packageName");
-                    int flags = appInfoObj.Get<int>("flags");
-                    bool isSystem = (flags & 1) != 0;
-                    if (skipSystemApps && isSystem) continue;
-
-                    string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
-                    Sprite iconSprite = GetAppIconSprite(packageName);
-
-                    Debug.Log($"[AppLauncher] App trouvée: {appName} [{packageName}], icône {(iconSprite != null ? "OK" : "NULL")}");
-                    list.Add(new AppInfo { packageName = packageName, appName = appName, appIcon = iconSprite });
-                }
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("[AppLauncher] Erreur GetInstalledApps : " + e.Message);
-        }
-#endif
-        return list;
-    }
-
-    List<AppInfo> GetApkFilesFromPrivateFolder()
+    try
     {
-        Debug.Log("[AppLauncher] Recherche APK dans dossier privé");
-        List<AppInfo> list = new List<AppInfo>();
-        string folder = Application.persistentDataPath;
-
-        if (Directory.Exists(folder))
+        using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
         {
-            string[] files = Directory.GetFiles(folder, "*.apk");
-            foreach (var f in files)
+            AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            AndroidJavaObject pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
+            AndroidJavaObject appsList = pm.Call<AndroidJavaObject>("getInstalledApplications", 0);
+            int size = appsList.Call<int>("size");
+            Debug.Log($"[AppLauncher] {size} apps installées détectées");
+
+            for (int i = 0; i < size; i++)
             {
-                string name = Path.GetFileName(f);
-                Debug.Log($"[AppLauncher] APK trouvé: {name}");
-                list.Add(new AppInfo { packageName = null, appName = name, appIcon = null, apkFilePath = f });
+                AndroidJavaObject appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
+                string packageName = appInfoObj.Get<string>("packageName");
+                if (string.IsNullOrEmpty(packageName)) continue;
+
+                // 🔹 Filtrage strict : uniquement les apps contenant "leclick"
+                if (!packageName.ToLower().Contains("leclick"))
+                    continue;
+
+                string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
+                Sprite iconSprite = GetAppIconSprite(packageName);
+                Debug.Log($"[AppLauncher] App retenue: {appName} [{packageName}]");
+                list.Add(new AppInfo { packageName = packageName, appName = appName, appIcon = iconSprite });
             }
         }
-        else
-        {
-            Debug.LogWarning("[AppLauncher] Dossier privé apk non trouvé");
-        }
-        return list;
     }
+    catch (System.Exception e)
+    {
+        Debug.LogError("[AppLauncher] Erreur GetInstalledApps : " + e.Message);
+    }
+#endif
+    return list;
+}
+
+List<AppInfo> GetApkFilesFromPrivateFolder()
+{
+    Debug.Log("[AppLauncher] Recherche APK dans dossier privé");
+    List<AppInfo> list = new List<AppInfo>();
+    string folder = Application.persistentDataPath;
+
+    if (Directory.Exists(folder))
+    {
+        string[] files = Directory.GetFiles(folder, "*.apk");
+        foreach (var f in files)
+        {
+            string name = Path.GetFileNameWithoutExtension(f);
+            // 🔹 Filtrage strict : seulement les fichiers contenant "leclick"
+            if (!name.ToLower().Contains("leclick"))
+                continue;
+
+            Debug.Log($"[AppLauncher] APK retenu: {name}");
+            list.Add(new AppInfo { packageName = null, appName = name, appIcon = null, apkFilePath = f });
+        }
+    }
+    else
+    {
+        Debug.LogWarning("[AppLauncher] Dossier privé apk non trouvé");
+    }
+    return list;
+}
 
     void CreateButtons()
     {
