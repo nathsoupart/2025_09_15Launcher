@@ -8,7 +8,7 @@ Il détecte automatiquement les autres applications XR développées par *LeClic
 
 - **Lister dynamiquement** ces applications dans une interface 3D interactive (VR launcher).
 - **Afficher les informations** et **prévisualisations** des applications (description, icône, image preview).
-- **Lancer directement** une des applications détectées par clic ou sélection VR.
+- **Lancer directement** une des applications détectées par clic sur "Play".
 
 ***
 
