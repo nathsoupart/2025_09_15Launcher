@@ -45,11 +45,16 @@ Le launcher respecte la **charte graphique officielle de LeClick**, qui garantit
 
 Le launcher est conçu pour être facilement **adaptable** à une autre charte graphique si besoin, par exemple en cas de changement d’identité visuelle de la marque ou pour une déclinaison personnalisée.
 
-Cela implique :
+Cela implique  manuellement:
 
-- La possibilité de remplacer le logo dans les assets Unity.
-- La mise à jour facile des couleurs dans les scripts ou les matériaux.
-- Le remplacement de la police dans les composants UI TextMeshPro.
+- La possibilité de remplacer le logo dans les assets dossier Material du projet
+  > Dans le "panellauncher" remplace "Toplogo"par celui de l'organisme.
+  > Si partenaire collaborateur, remplace dans le "bottom" du panellauncher.
+  
+- La mise à jour facile des couleurs dans les Objets Ui des panels comme
+  > settings (roue), Le bouton prefab "Play", le fond du panel "InfoApk" dans "fondinformation"
+- Le remplacement de la police dans les composants UI TextMeshPro comme
+  > "TextInfo" dans le panel "infoApk" ou les préfabs "Boutonapk" et "play" ainsi que dans les "Bottoms"
 
 
 
@@ -88,41 +93,27 @@ Les données trouvées sont associées aux métadonnées du JSON (description, p
 
 Lorsqu’un bouton est cliqué :
 
-- La fiche descriptive s’affiche (texte description, image preview, icône éventuelle).
+- La fiche descriptive s’affiche (texte description, image preview, icône éventuelle, logo du projet , liste des partenaires, logo des soutiens financiers).
 - L’utilisateur peut ensuite cliquer sur le bouton **Play** pour lancer l’application.
 
 
 #### Étape 5 – Lancement de l’application (`OnPlayButtonClicked`)
 
-- Si l’app a un **packageName**, Unity crée un **intent** de lancement natif Android.
-::: warning
-utilise la bonne casse pour PackageName:::
-
-- Si c’est une **APK locale**, elle est ouverte via Intent `VIEW` (installation possible).
+Bouton cliquable "play" sur le panel de droite "InfoApk" permet de lancer l'application sélectionnée.
 
 ***
 
 ### 4. Permissions importantes (AndroidManifest.xml)
 
-| Permission | Rôle | Statut |
-| :-- | :-- | :-- |
-| `android.permission.READ_EXTERNAL_STORAGE` | Lire les APK ou JSON copiés. | Requise |
-| `android.permission.QUERY_ALL_PACKAGES` | Scanner les apps installées. | Requise (Android 11+) |
-| `com.oculus.permission.HAND_TRACKING` | Hand tracking possible en VR. | Optionnelle |
-| `com.oculus.permission.USE_ANCHOR_API` | Persistance ancrages spatiaux. | Optionnelle |
-| `com.oculus.permission.USE_SCENE` | Gestion scène environnante Quest. | Optionnelle |
-
-**Feature flags** VR importants :
-
-- `oculus.software.handtracking`
-- `com.oculus.feature.PASSTHROUGH`
-- `android.hardware.vr.headtracking`
-
-Certains Meta-data comme `com.oculus.telemetry.project_guid` servent à l’intégration Oculus et ne doivent pas être supprimés.
+Vérifie les permissions dans le fichier Manifest qui se trouve dans les Assets -> Plugins -> android 
 
 ***
 
 ### 5. JSON de configuration (`appdata.json`)
+
+A trouver dans les Assets -> streamingAssets
+
+Il permet de compléter le panel "InfoApk" sur l'application sélectionnée via son packageName.
 
 Chaque entrée décrit une app détectable :
 
@@ -154,46 +145,56 @@ Chaque entrée décrit une app détectable :
   }
 ]
 ```
+Ce fichier grâce au script "StreamingAssetcopier.cs" est installé avec les images  .png dans le "persistentDataPath" du casque.
+! ne se fait pas automatiquement, il faut supprimer le fichier et les images sur le casque  (quand il est modifier). Ensuite, rebuildé pour le replacer automatiquement avec modifications.
 
 **À modifier :**
 
-- Ajouter ou retirer des entrées selon les projets présents dans ton le casque meta quest 3.
+- Ajouter ou retirer des données selon les projets présents dans ton le casque meta quest 3 comme
+   > Nom/ version / Description / Image demo / liste partenaires / logos des soutiens financiers
 - Adapter `packageName` pour correspondre à celui défini dans chaque `AndroidManifest` d’app.
-- Les images `.png` doivent se trouver dans `StreamingAssets/`.
+- Les images `.png` et logos doivent se trouver dans `StreamingAssets/`.
 
 ***
+### 6. Bouton "Quit"
+
+sur les Apks "démo", il faut avoir placer le préfab "Quit" et son script "Launcher.cs" pour permettre le retour à l'application Launcher.
+
+Il est à copier dans le dossier Assets -> Prefab
 
 
-
-### 6. Fichiers du projet nécessaires
+***
+### 7. Fichiers du projet nécessaires
 
 - **Scripts :**
     - `DetectApkLauncher.cs`
     - `Launcher.cs` (à placer sur apk crée avec le prefab quit)
-- **JSON :**
-    - `appdata.json`
+    - `StreamingAssetsCopier.cs`
+  
 - **UI Prefabs :**
     - `ButtonPrefab` (avec TextMeshProUGUI + Image "Icon")
     - `PreviewImage` et `InfoPanel` UI
+    - `Play`
+    - `Info`
+    - `quit`
 - **Assets Streaming :**
     - `demoa_preview.png`(exemple)
     - `demob_preview.png`(exemple)
     - `mylauncher_preview.png`
+    **JSON :**
+    - `appdata.json`
 
 ***
 
 ### 7. Résumé d’utilisation
 
-1. Construire le projet Unity avec `be.leclick.mylauncher` dans le champ Package Name.
-2. Inclure les scripts ci-dessus dans une scène Unity avec :
-    - Un `Canvas` en World Space (pour interface VR).
-    - Un GameObject contenant `DetectApkLauncher`.
-3. Déployer sur Meta Quest avec **permissions activées dans le manifest**.
-4. Lors du lancement :
-    - Le système copie le JSON dans le stockage interne.
-    - Scanne les APK LeClick présentes.
-    - Génère automatiquement la liste d’applications cliquables.
-5. L’utilisateur peut ensuite lancer les apps en un clic depuis le casque.
+1. Définir si la charte graphique est celle du "Click" ou à adapter.
+2. Modifier les filtres pour limiter les apks à montrer.
+3. Remplir le fichier Json des infos sur les Apks à montrer et les images, logos à ajouter.
+4. Ajouter le bouton Quit et script "launcher.cs" dans les apks à monter.
+5. Installer le launcher sur le casque 
+6. Lancer le Launcher.
+7. L’utilisateur peut ensuite lancer les apps en un clic depuis le casque.
 
 ***
 
