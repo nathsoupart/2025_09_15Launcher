@@ -34,7 +34,7 @@ public class DetectApkLauncher : MonoBehaviour
     }
 
     [Header("UI References")]
-    public Sprite defaultSprite;
+    public Sprite defaultIcon;
     public GameObject buttonPrefab;
     public Transform buttonsParent;
     public TextMeshProUGUI infoText;
@@ -235,7 +235,10 @@ public class DetectApkLauncher : MonoBehaviour
                     var appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
                     string packageName = appInfoObj.Get<string>("packageName");
                     if (string.IsNullOrEmpty(packageName)) continue;
-                    if (!packageName.ToLower().Contains("leclick")) continue;
+                    if (!packageName.ToLower().Contains("leclick") && 
+                    !packageName.ToLower().Contains("unitytechnologies"))    // filtre sur packageName à changer ici
+                         continue;                                         
+
 
                     string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
                     Sprite iconSprite = GetAppIconSprite(packageName);
@@ -244,7 +247,7 @@ public class DetectApkLauncher : MonoBehaviour
                     {
                         packageName = packageName,
                         appName = appName,
-                        appIcon = iconSprite,
+                        appIcon = iconSprite  ? iconSprite : defaultIcon,
                         apkFilePath = null
                     });
 
@@ -271,7 +274,7 @@ public class DetectApkLauncher : MonoBehaviour
             foreach (var f in files)
             {
                 string name = Path.GetFileNameWithoutExtension(f);
-                if (!name.ToLower().Contains("leclick")) continue;
+                if (!name.ToLower().Contains("leclick") && !name.ToLower().Contains("unitytechnologies")) continue;  // deuxieme filtre à modifier ici
 
                 list.Add(new AppInfo
                 {
@@ -301,7 +304,7 @@ public class DetectApkLauncher : MonoBehaviour
             if (iconTransform != null)
             {
                 var img = iconTransform.GetComponent<Image>();
-                if (img != null) img.sprite = app.appIcon ?? defaultSprite;
+                if (img != null) img.sprite = app.appIcon ?? defaultIcon;
             }
 
             Button btnComp = btnObj.GetComponent<Button>();
@@ -318,7 +321,7 @@ public class DetectApkLauncher : MonoBehaviour
         selectedApp = app;
         infoText.text = $"Nom: {app.appName}\nPackage: {app.packageName ?? "N/A"}\n\nDescription:\n{app.description ?? "Aucune"}";
 
-        infoIcon.sprite = app.appIcon ?? defaultSprite;
+        infoIcon.sprite = app.appIcon ?? defaultIcon;
        
             Debug.Log($"[OnAppSelected] Sélection : {app.appName} | Package: {app.packageName}");
             Debug.Log($"[OnAppSelected] Description = {(app.description ?? "null")}, Preview = {(app.previewImage ?? "null")}");
@@ -339,12 +342,12 @@ public class DetectApkLauncher : MonoBehaviour
             else
             {
                 Debug.LogWarning($"[OnAppSelected] Preview non trouvée : {imgPath}");
-                previewImageUI.sprite = defaultSprite;
+                previewImageUI.sprite = defaultIcon;
             }
         }
         else
         {
-            previewImageUI.sprite = defaultSprite; // placeholder si pas d'image
+            previewImageUI.sprite = defaultIcon; // placeholder si pas d'image
         }
     }
 

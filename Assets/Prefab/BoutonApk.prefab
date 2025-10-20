@@ -312,7 +312,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.96262014, g: 0.9794492, b: 0.9811321, a: 0.3019608}
+    m_NormalColor: {r: 0.96262014, g: 0.9794492, b: 0.9811321, a: 0.6039216}
     m_HighlightedColor: {r: 0.9466924, g: 0.95094335, b: 0.91147023, a: 1}
     m_PressedColor: {r: 0.8392157, g: 0.16470589, b: 0.3529412, a: 1}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -363,7 +363,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5314257963925215397}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 07b3638c2f5db5b479ff24c2859713d4, type: 3}
   m_Name: 
