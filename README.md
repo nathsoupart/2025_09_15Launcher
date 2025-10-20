@@ -23,7 +23,7 @@ Le système repose sur trois composantes principales :
 | **Launcher.cs**                                             | à ajouter avec le prefab "quit "aux Apks crées  pour revenir au launcher                  |
 | **appdata.json**                                            | Fournit les métadonnées (nom, package, image, description) de chaque application LeClick. |
 | **AndroidManifest.xml**                                     | Définit les permissions nécessaires et la configuration VR/Quest.                         |
-| **Prefabs UI (Panellauncher, play UI, bouton quit, icons)** | Déterminent l’interface visuelle et interactive VR.                                       |
+| **Prefabs UI (Panellauncher, play UI, bouton quit, icons)** | Déterminent l’interface visuelle et interactive XR.                                       |
 
 ***
 
