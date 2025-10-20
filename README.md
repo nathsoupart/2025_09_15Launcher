@@ -53,6 +53,7 @@ Cela implique  manuellement:
   
 - La mise à jour facile des couleurs dans les Objets Ui des panels comme
   > settings (roue), Le bouton prefab "Play", le fond du panel "InfoApk" dans "fondinformation"
+  
 - Le remplacement de la police dans les composants UI TextMeshPro comme
   > "TextInfo" dans le panel "infoApk" ou les préfabs "Boutonapk" et "play" ainsi que dans les "Bottoms"
 
@@ -156,7 +157,14 @@ Ce fichier grâce au script "StreamingAssetcopier.cs" est installé avec les ima
 - Les images `.png` et logos doivent se trouver dans `StreamingAssets/`.
 
 ***
-### 6. Bouton "Quit"
+### 6. GameObject "Applauncher"
+
+contient les scripts principaux
+
+à compléter pour le "defaultIcon" si pas d'icone sur l'apk pour éviter le "logo Unity"
+
+***
+### 7. Bouton "Quit"
 
 sur les Apks "démo", il faut avoir placer le préfab "Quit" et son script "Launcher.cs" pour permettre le retour à l'application Launcher.
 
@@ -164,7 +172,7 @@ Il est à copier dans le dossier Assets -> Prefab
 
 
 ***
-### 7. Fichiers du projet nécessaires
+### 8. Fichiers du projet nécessaires
 
 - **Scripts :**
     - `DetectApkLauncher.cs`
@@ -186,7 +194,7 @@ Il est à copier dans le dossier Assets -> Prefab
 
 ***
 
-### 7. Résumé d’utilisation
+### 9. Résumé d’utilisation
 
 1. Définir si la charte graphique est celle du "Click" ou à adapter.
 2. Modifier les filtres pour limiter les apks à montrer.
