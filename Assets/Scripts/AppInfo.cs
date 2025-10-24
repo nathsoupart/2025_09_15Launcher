@@ -19,9 +19,3 @@ public class Partner
 {
     public string name;
 }
-
-[Serializable]
-public class Organization
-{
-    public string name;
-}

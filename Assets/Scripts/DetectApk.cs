@@ -13,15 +13,11 @@ public class DetectApkLauncher : MonoBehaviour
     public class Partner
     {
         public string name;
-        public string logo;
+       
     }
 
-    [Serializable]
-    public class Organization
-    {
-        public string name;
-        public string icon;
-    }
+    
+   
 
     [Serializable]
     public class AppInfo
