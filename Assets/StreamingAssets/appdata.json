@@ -1,26 +1,50 @@
-[
-  {
-    "appName": "Demoa",
-    "packageName": "com.leclick.demoa",
-    "apkFilePath": null,
-    "version": "1.0.0",
-    "description": "Une démo interactive développée par LeClick.",
-    "previewImage": "demoa_preview.png"
-  },
-  {
-    "appName": "Demob",
-    "packageName": "com.leclick.demob",
-    "apkFilePath": null,
-    "version": "1.0.0",
-    "description": "Une démo bonhomme lunette",
-    "previewImage": "demob_preview.png"
-  },
-  {
+
+
+
+    [
+      {
+        "appName": "Demoa",
+        "packageName": "com.leclick.demoa",
+        "version": "1.0.0",
+        "description": "Une démo interactive développée par LeClick.",
+        "partners": [
+          {"name": "umons"}, 
+          {"name": "idea"}
+        ],
+        "previewImage": "demoa_preview.png",
+        "financialLogo": "logofinancial_demoa.png",
+        "organization":  "leclick_logo.png"
+          
+        
+      },
+      {
+        "appName": "Demob",
+        "packageName": "com.leclick.demob",
+        "version": "1.0.0",
+        "description": "Une démo interactive développée par LeClick.",
+        "partners": [
+          { "name": "Idea" },
+          { "name": "Umons"}
+        ],
+        "previewImage": "demob_preview.png",
+        "financialLogo": "logofinancial_demob.png",
+        "organization": "interreg_logo.png"
+      },
+    
+
+
+    {
     "appName": "Mylaunch",
     "packageName": "be.leclick.mylauncher",
-    "apkFilePath": null,
     "version": "1.0.0",
-    "description": "Une application qui détecte les apks installées par LeClick et qui permet de les lancer et de les décrire",
-    "previewImage": "mylauncher_preview.png"
-  }
-]
+    "description": "Une application qui détecte les apks installées par LeClick, qui permet de les lancer et de lire les infos ",
+      "partners": [
+        { "name": "idea" },
+        { "name": "Umons" }
+      ],
+      "previewImage": "mylauncher_preview.png",
+      "financialLogo": "logofinancial_mylauncher.png",
+      "organization": { }
+   
+     }
+   ]

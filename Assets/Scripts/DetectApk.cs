@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -8,26 +9,47 @@ using UnityEngine.Android;
 
 public class DetectApkLauncher : MonoBehaviour
 {
-    [System.Serializable]
+    [Serializable]
+    public class Partner
+    {
+        public string name;
+        public string logo;
+    }
+
+    [Serializable]
+    public class Organization
+    {
+        public string name;
+        public string icon;
+    }
+
+    [Serializable]
     public class AppInfo
     {
         public string packageName;
         public string appName;
-        [System.NonSerialized] public Sprite appIcon;
+        [NonSerialized] public Sprite appIcon;
         public string apkFilePath;
         public string description;
         public string previewImage;
+        public string organization;
+        public List<Partner> partners;
+        public string financialLogo; // Image UI pour logofinancial
     }
 
-    [System.Serializable]
+    [Serializable]
     public class AppDataEntry
     {
         public string packageName;
+        public string appName;
         public string description;
         public string previewImage;
+        public string organization;
+        public List<Partner> partners;
+        public string financialLogo;
     }
 
-    [System.Serializable]
+    [Serializable]
     private class AppDataWrapper
     {
         public AppDataEntry[] entries;
@@ -40,30 +62,22 @@ public class DetectApkLauncher : MonoBehaviour
     public TextMeshProUGUI infoText;
     public Button playButton;
     public Image infoIcon;       // icône de l’appli
-    public Image previewImageUI; // image de preview du JSON
-
+    public Image previewImageUI; // image de preview
+    public Image infoOrglogo;    // logo de l’organisation
+    public Image infoFinancialLogo; // Image UI pour le logo financier
 
     [Header("Settings")]
     public bool skipSystemApps = true;
-    
-    
-   
+
     private List<AppInfo> apps = new List<AppInfo>();
     private List<AppDataEntry> appDataEntries = new List<AppDataEntry>();
     private AppInfo selectedApp = null;
-    private bool appJustLaunched = false;
 
     void Start()
     {
-        Debug.Log("[Launcher] Start appelée");
-
-        // Copier JSON + images depuis StreamingAssets
+       
         CopyStreamingAssetsToPersistent();
-
-        // Charger JSON
         LoadAppDataJson();
-
-        // Vérifier permission stockage et détecter APK
         CheckStoragePermission();
 
         if (playButton != null)
@@ -86,6 +100,7 @@ public class DetectApkLauncher : MonoBehaviour
     void CopyFolderStandalone(string sourceFolder, string targetFolder)
     {
         if (!Directory.Exists(sourceFolder)) return;
+
         foreach (string filePath in Directory.GetFiles(sourceFolder))
         {
             string fileName = Path.GetFileName(filePath);
@@ -93,7 +108,6 @@ public class DetectApkLauncher : MonoBehaviour
             if (!File.Exists(destPath))
                 File.Copy(filePath, destPath, true);
         }
-        Debug.Log("[Launcher] StreamingAssets copiés dans persistentDataPath");
     }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -102,11 +116,12 @@ public class DetectApkLauncher : MonoBehaviour
         if (!Directory.Exists(targetFolder))
             Directory.CreateDirectory(targetFolder);
 
-        string[] files = { "appdata.json", "demoa_preview.png", "demob_preview.png","mylauncher_preview.png"}; // liste des fichiers à copier
+        string[] files = { "appdata.json", "demoa_preview.png", "demob_preview.png", "mylauncher_preview.png", "leclick_logo.png",  "idea_logo.png", "umons_logo.png" ,"logofinancial_demoa.png", "interreg_logo.png"};
         foreach (string fileName in files)
         {
             string srcPath = Path.Combine(sourceFolder, fileName);
             string dstPath = Path.Combine(targetFolder, fileName);
+
             if (!File.Exists(dstPath))
             {
                 using (var www = new UnityEngine.Networking.UnityWebRequest(srcPath))
@@ -115,12 +130,7 @@ public class DetectApkLauncher : MonoBehaviour
                     yield return www.SendWebRequest();
 
                     if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
-                    {
                         File.WriteAllBytes(dstPath, www.downloadHandler.data);
-                        Debug.Log($"[Launcher] Copié {fileName} vers persistentDataPath");
-                    }
-                    else
-                        Debug.LogWarning($"[Launcher] Impossible de copier {fileName}: {www.error}");
                 }
             }
         }
@@ -128,19 +138,20 @@ public class DetectApkLauncher : MonoBehaviour
 #endif
     #endregion
 
-    #region JSON Loading
+    #region JSON
     void LoadAppDataJson()
     {
         string jsonPath = Path.Combine(Application.persistentDataPath, "appdata.json");
         if (File.Exists(jsonPath))
         {
             string jsonText = File.ReadAllText(jsonPath);
-            appDataEntries = new List<AppDataEntry>(JsonUtility.FromJson<AppDataWrapper>("{\"entries\":" + jsonText + "}").entries);
-            Debug.Log($"[Launcher] JSON chargé : {appDataEntries.Count} entrées");
+            appDataEntries = new List<AppDataEntry>(
+                JsonUtility.FromJson<AppDataWrapper>("{\"entries\":" + jsonText + "}").entries
+            );
         }
         else
         {
-            Debug.LogWarning("[Launcher] JSON appdata.json introuvable !");
+            Debug.LogWarning("JSON appdata.json introuvable !");
         }
     }
     #endregion
@@ -148,25 +159,15 @@ public class DetectApkLauncher : MonoBehaviour
     #region Permissions
     void CheckStoragePermission()
     {
-        Debug.Log("[Launcher] Vérification permission stockage");
         if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
         {
             var callbacks = new PermissionCallbacks();
-            callbacks.PermissionGranted += (perm) =>
-            {
-                Debug.Log("[Launcher] Permission stockage accordée");
-                RefreshApps();
-            };
-            callbacks.PermissionDenied += (perm) =>
-            {
-                Debug.LogWarning("[Launcher] Permission stockage refusée");
-                RefreshApps();
-            };
+            callbacks.PermissionGranted += (perm) => RefreshApps();
+            callbacks.PermissionDenied += (perm) => RefreshApps();
             Permission.RequestUserPermission(Permission.ExternalStorageRead, callbacks);
         }
         else
         {
-            Debug.Log("[Launcher] Permission stockage déjà accordée");
             RefreshApps();
         }
     }
@@ -175,41 +176,29 @@ public class DetectApkLauncher : MonoBehaviour
     #region APK Detection
     public void RefreshApps()
     {
-        Debug.Log("[Launcher] RefreshApps appelée");
         apps.Clear();
         ClearButtons();
 
-        apps.AddRange(GetInstalledApps());
-        apps.AddRange(GetApkFilesFromPrivateFolder());
+        List<AppInfo> installedApps = GetInstalledApps();
+        List<AppInfo> apkFiles = GetApkFilesFromPrivateFolder();
+        apps.AddRange(installedApps);
+        apps.AddRange(apkFiles);
 
-        // Associer JSON + image preview (sans écraser l'icône réelle)
         foreach (var app in apps)
         {
-            var data = appDataEntries.Find(e => e.packageName == app.packageName || e.packageName == app.appName);
+            var data = appDataEntries.Find(e => e.packageName == app.packageName || e.appName == app.appName);
             if (data != null)
             {
                 app.description = data.description;
                 app.previewImage = data.previewImage;
-
-                if (!string.IsNullOrEmpty(data.previewImage))
-                {
-                    string imgPath = Path.Combine(Application.persistentDataPath, data.previewImage);
-                    if (File.Exists(imgPath))
-                    {
-                        Debug.Log($"[Launcher] Preview trouvée pour {app.appName}: {imgPath}");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[Launcher] Preview introuvable pour {app.appName}: {imgPath}");
-                    }
-                }
+                app.organization = data.organization;
+                app.partners = data.partners;
+                app.financialLogo = data.financialLogo;
             }
         }
 
-        Debug.Log($"[Launcher] {apps.Count} apps détectées au total.");
         CreateButtons();
     }
-
 
     void ClearButtons()
     {
@@ -234,11 +223,11 @@ public class DetectApkLauncher : MonoBehaviour
                 {
                     var appInfoObj = appsList.Call<AndroidJavaObject>("get", i);
                     string packageName = appInfoObj.Get<string>("packageName");
-                    if (string.IsNullOrEmpty(packageName)) continue;
-                    if (!packageName.ToLower().Contains("leclick") && 
-                    !packageName.ToLower().Contains("unitytechnologies"))    // filtre sur packageName à changer ici
-                         continue;                                         
 
+                    if (string.IsNullOrEmpty(packageName)) continue;
+                    if (!packageName.ToLower().Contains("leclick") &&
+                        !packageName.ToLower().Contains("unitytechnologies"))
+                        continue;
 
                     string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
                     Sprite iconSprite = GetAppIconSprite(packageName);
@@ -247,17 +236,16 @@ public class DetectApkLauncher : MonoBehaviour
                     {
                         packageName = packageName,
                         appName = appName,
-                        appIcon = iconSprite  ? iconSprite : defaultIcon,
+                        appIcon = iconSprite ?? defaultIcon,
                         apkFilePath = null
-                    });
 
-                    Debug.Log($"[GetInstalledApps] App ajoutée: {appName} ({packageName})");
+                    });
                 }
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            Debug.LogError("[Launcher] Erreur GetInstalledApps : " + e);
+            Debug.LogError("Erreur GetInstalledApps : " + e.Message);
         }
 #endif
         return list;
@@ -274,7 +262,9 @@ public class DetectApkLauncher : MonoBehaviour
             foreach (var f in files)
             {
                 string name = Path.GetFileNameWithoutExtension(f);
-                if (!name.ToLower().Contains("leclick") && !name.ToLower().Contains("unitytechnologies")) continue;  // deuxieme filtre à modifier ici
+                if (!name.ToLower().Contains("leclick") &&
+                    !name.ToLower().Contains("unitytechnologies"))
+                    continue;
 
                 list.Add(new AppInfo
                 {
@@ -283,8 +273,6 @@ public class DetectApkLauncher : MonoBehaviour
                     apkFilePath = f,
                     appIcon = null
                 });
-
-                Debug.Log($"[GetApkFiles] APK trouvée: {name} ({f})");
             }
         }
         return list;
@@ -319,37 +307,91 @@ public class DetectApkLauncher : MonoBehaviour
     void OnAppSelected(AppInfo app)
     {
         selectedApp = app;
-        infoText.text = $"Nom: {app.appName}\nPackage: {app.packageName ?? "N/A"}\n\nDescription:\n{app.description ?? "Aucune"}";
 
+        string partnersList = "Aucun";
+        if (app.partners != null && app.partners.Count > 0)
+            partnersList = string.Join("\n• ", app.partners.ConvertAll(p => p.name));
+
+        infoText.text =
+            $"<b>Nom:</b> {app.appName}\n" +
+            $"<b>Package:</b> {app.packageName ?? "N/A"}\n\n" +
+            $"<b>Description:</b>\n{app.description ?? "Aucune"}\n\n" +
+            $"<b>Partenaires:</b>\n• {partnersList}";
+           
         infoIcon.sprite = app.appIcon ?? defaultIcon;
-       
-            Debug.Log($"[OnAppSelected] Sélection : {app.appName} | Package: {app.packageName}");
-            Debug.Log($"[OnAppSelected] Description = {(app.description ?? "null")}, Preview = {(app.previewImage ?? "null")}");
-            Debug.Log($"[OnAppSelected] infoText={(infoText != null)}, infoIcon={(infoIcon != null)}, previewImageUI={(previewImageUI != null)}");
+        LoadSpriteFromPersistent(app.organization, infoOrglogo);
+        LoadSpriteFromPersistent(app.previewImage, previewImageUI);
+        LoadSpriteFromPersistent(app.financialLogo, infoFinancialLogo);
+    }
 
-
-        Debug.Log($"[OnAppSelected] {app.appName} sélectionnée | description={app.description ?? "null"} | image={app.previewImage ?? "null"}");
-        if (!string.IsNullOrEmpty(app.previewImage))
+    private void LoadSpriteFromPersistent(string fileName, Image targetImage)
+    {
+        if (string.IsNullOrEmpty(fileName) || targetImage == null)
         {
-            string imgPath = Path.Combine(Application.persistentDataPath, app.previewImage);
-            if (File.Exists(imgPath))
-            {
-                byte[] bytes = File.ReadAllBytes(imgPath);
-                Texture2D tex = new Texture2D(2, 2);
-                if (tex.LoadImage(bytes))
-                    previewImageUI.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-            }
-            else
-            {
-                Debug.LogWarning($"[OnAppSelected] Preview non trouvée : {imgPath}");
-                previewImageUI.sprite = defaultIcon;
-            }
+            if (targetImage != null) targetImage.sprite = defaultIcon;
+            return;
+        }
+
+        string path = Path.Combine(Application.persistentDataPath, fileName);
+        if (File.Exists(path))
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(2, 2);
+            tex.LoadImage(bytes);
+            targetImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
         }
         else
         {
-            previewImageUI.sprite = defaultIcon; // placeholder si pas d'image
+            targetImage.sprite = defaultIcon;
         }
     }
+    #endregion
+
+    #region PlayButton
+    public void OnPlayButtonClicked()
+    {
+        if (selectedApp == null)
+        {
+            Debug.LogWarning("Aucune app sélectionnée !");
+            return;
+        }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (AndroidJavaClass unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            {
+                AndroidJavaObject currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+
+                if (!string.IsNullOrEmpty(selectedApp.packageName))
+                {
+                    AndroidJavaObject pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
+                    AndroidJavaObject launchIntent = pm.Call<AndroidJavaObject>("getLaunchIntentForPackage", selectedApp.packageName);
+
+                    if (launchIntent != null)
+                        currentActivity.Call("startActivity", launchIntent);
+                }
+                else if (!string.IsNullOrEmpty(selectedApp.apkFilePath))
+                {
+                    AndroidJavaObject intent = new AndroidJavaObject("android.content.Intent", "android.intent.action.VIEW");
+                    AndroidJavaClass uriClass = new AndroidJavaClass("android.net.Uri");
+                    AndroidJavaObject uri = uriClass.CallStatic<AndroidJavaObject>("parse", "file://" + selectedApp.apkFilePath);
+
+                    intent.Call<AndroidJavaObject>("setDataAndType", uri, "application/vnd.android.package-archive");
+                    intent.Call<AndroidJavaObject>("addFlags", 0x10000000);
+                    currentActivity.Call("startActivity", intent);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Erreur lancement : " + e.Message);
+        }
+#else
+        Debug.Log("Simulation lancement : " + selectedApp.appName);
+#endif
+    }
+    #endregion
 
     Sprite GetAppIconSprite(string packageName)
     {
@@ -362,60 +404,25 @@ public class DetectApkLauncher : MonoBehaviour
                 byte[] iconBytes = jc.CallStatic<byte[]>("getAppIcon", packageName, context);
                 if (iconBytes != null && iconBytes.Length > 0)
                 {
-                    Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    if (tex.LoadImage(iconBytes))
-                        return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    Texture2D tex = new Texture2D(2, 2);
+                    tex.LoadImage(iconBytes);
+                    return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 }
             }
         }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning("[GetAppIconSprite] Exception: " + e);
-        }
+        catch { }
 #endif
         return null;
     }
 
-    void OnPlayButtonClicked()
+    public void ClearPersistentFiles()
     {
-        if (selectedApp == null)
-        {
-            Debug.LogWarning("[LauncherPlay] Aucune app sélectionnée !");
-            return;
-        }
+        string path = Application.persistentDataPath;
+        if (!Directory.Exists(path)) return;
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-        using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+        foreach (var file in Directory.GetFiles(path))
         {
-            var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
-            try
-            {
-                if (!string.IsNullOrEmpty(selectedApp.packageName))
-                {
-                    var pm = currentActivity.Call<AndroidJavaObject>("getPackageManager");
-                    var intent = pm.Call<AndroidJavaObject>("getLaunchIntentForPackage", selectedApp.packageName);
-                    if (intent != null)
-                        currentActivity.Call("startActivity", intent);
-                }
-                else if (!string.IsNullOrEmpty(selectedApp.apkFilePath))
-                {
-                    var intent = new AndroidJavaObject("android.content.Intent", "android.intent.action.VIEW");
-                    var uriClass = new AndroidJavaClass("android.net.Uri");
-                    var fileObj = new AndroidJavaObject("java.io.File", selectedApp.apkFilePath);
-                    var uri = uriClass.CallStatic<AndroidJavaObject>("fromFile", fileObj);
-                    intent.Call<AndroidJavaObject>("setDataAndType", uri, "application/vnd.android.package-archive");
-                    intent.Call<AndroidJavaObject>("addFlags", 0x10000000);
-                    currentActivity.Call("startActivity", intent);
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("[LauncherPlay] Erreur lancement : " + e);
-            }
+            try { File.Delete(file); } catch { }
         }
-#else
-        Debug.Log($"[LauncherPlay] Simulation lancement : {selectedApp.appName}");
-#endif
     }
-    #endregion
 }

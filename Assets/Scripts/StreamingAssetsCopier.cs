@@ -41,7 +41,8 @@ public class StreamingAssetsCopier : MonoBehaviour
         if (!Directory.Exists(targetFolder))
             Directory.CreateDirectory(targetFolder);
 
-        foreach (string fileName in new string[] { "demoa_preview.png", "test_preview.png" }) // liste des fichiers
+        foreach (string fileName in new string[] { "demoa_preview.png",  "demob_preview.png", "mylauncher_preview.png",
+        "leclick_logo.png","logofinancial_demoa.png", "interreg_logo.png"}) // liste des fichiers
         {
             string srcPath = Path.Combine(sourceFolder, fileName);
             string dstPath = Path.Combine(targetFolder, fileName);
