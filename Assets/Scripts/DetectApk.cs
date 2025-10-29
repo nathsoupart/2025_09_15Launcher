@@ -335,6 +335,7 @@ public class DetectApkLauncher : MonoBehaviour
             Texture2D tex = new Texture2D(2, 2);
             tex.LoadImage(bytes);
             targetImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            targetImage.preserveAspect = true;
         }
         else
         {
