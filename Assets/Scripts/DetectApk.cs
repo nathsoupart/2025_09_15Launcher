@@ -105,14 +105,14 @@ public class DetectApkLauncher : MonoBehaviour
                 File.Copy(filePath, destPath, true);
         }
     }
-
+// ajouter les fichiers steamingasset ici
 #if UNITY_ANDROID && !UNITY_EDITOR
     IEnumerator CopyFolderAndroid(string sourceFolder, string targetFolder)
     {
         if (!Directory.Exists(targetFolder))
             Directory.CreateDirectory(targetFolder);
 
-        string[] files = { "appdata.json", "demoa_preview.png", "demob_preview.png", "mylauncher_preview.png", "leclick_logo.png",  "idea_logo.png", "umons_logo.png" ,"logofinancial_demoa.png", "interreg_logo.png"};
+        string[] files = { "appdata.json", "demoa_preview.png", "demob_preview.png", "mylauncher_preview.png", "leclick_logo.png",  "idea_logo.png", "umons_logo.png" ,"logofinancial_demoa.png", "interreg_logo.png", "technocite_logo.png" }; 
         foreach (string fileName in files)
         {
             string srcPath = Path.Combine(sourceFolder, fileName);
@@ -222,7 +222,7 @@ public class DetectApkLauncher : MonoBehaviour
 
                     if (string.IsNullOrEmpty(packageName)) continue;
                     if (!packageName.ToLower().Contains("leclick") &&
-                        !packageName.ToLower().Contains("unitytechnologies"))
+                        !packageName.ToLower().Contains("unitytechnologies")) //filtre à ajouter ou retirer
                         continue;
 
                     string appName = pm.Call<string>("getApplicationLabel", appInfoObj);
@@ -259,7 +259,7 @@ public class DetectApkLauncher : MonoBehaviour
             {
                 string name = Path.GetFileNameWithoutExtension(f);
                 if (!name.ToLower().Contains("leclick") &&
-                    !name.ToLower().Contains("unitytechnologies"))
+                    !name.ToLower().Contains("unitytechnologies")) //filtre à ajouter ou retirer
                     continue;
 
                 list.Add(new AppInfo
@@ -412,14 +412,5 @@ public class DetectApkLauncher : MonoBehaviour
         return null;
     }
 
-    public void ClearPersistentFiles()
-    {
-        string path = Application.persistentDataPath;
-        if (!Directory.Exists(path)) return;
-
-        foreach (var file in Directory.GetFiles(path))
-        {
-            try { File.Delete(file); } catch { }
-        }
-    }
+  
 }

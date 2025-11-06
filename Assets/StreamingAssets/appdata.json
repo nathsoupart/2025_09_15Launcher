@@ -27,7 +27,7 @@
           { "name": "Umons"}
         ],
         "previewImage": "demob_preview.png",
-        "financialLogo": "logofinancial_demob.png",
+        "financialLogo": "logofinancial_demoa.png",
         "organization": "interreg_logo.png"
       },
     
@@ -37,14 +37,40 @@
     "appName": "Mylaunch",
     "packageName": "be.leclick.mylauncher",
     "version": "1.0.0",
-    "description": "Une application qui détecte les apks installées par LeClick, qui permet de les lancer et de lire les infos ",
+    "description": "Une application capable de détecter les APK ou démos installées (par LeClick ou d’autres filtres), d’en afficher les informations et de permettre leur lancement. ",
       "partners": [
         { "name": "idea" },
         { "name": "Umons" }
       ],
       "previewImage": "mylauncher_preview.png",
-      "financialLogo": "logofinancial_mylauncher.png",
-      "organization": { }
+      "financialLogo": "logofinancial_demoa.png",
+      "organization": {}
    
-     }
-   ]
+     },
+      {
+        "appName": "Vrnathexercice",
+        "packageName": "com.LeClick.Vrnathproject",
+        "version": "1.0.0",
+        "description": "Une démo interactive d'une fenêtre sur un autre monde et un jeu de détection cube/rond",
+        "partners": [
+          { "name": "LeClick" },
+          { "name": "Nathalie Soupart"}
+        ],
+        "previewImage": "Vrnath_preview.png",
+        "financialLogo": "logofinancial_demoa.png",
+        "organization": "technocite_logo.png"
+      },
+      {
+        "appName": "XR25_FirstVr",
+        "packageName": "com.leclick.template.vr",
+        "version": "1.0.0",
+        "description": "Une démo interactive d'un nmonde meta",
+        "partners": [
+          { "name": "Meta" },
+          { "name": "Nathalie Soupart"}
+        ],
+        "previewImage": "XRFirstVr_preview.png",
+        "financialLogo": "logofinancial_demoa.png",
+        "organization": "technocite_logo.png"
+      }
+    ]

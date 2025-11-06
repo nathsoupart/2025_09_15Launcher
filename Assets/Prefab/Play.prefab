@@ -168,7 +168,6 @@ GameObject:
   - component: {fileID: 8709464443233211454}
   - component: {fileID: 5909465658714556827}
   - component: {fileID: 8143648619403417919}
-  - component: {fileID: 4112590598570033312}
   - component: {fileID: 4510171898983206748}
   m_Layer: 5
   m_Name: Play
@@ -279,25 +278,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &4112590598570033312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7951620997542001546}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07b3638c2f5db5b479ff24c2859713d4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_PokeFollowTransform: {fileID: 0}
-  m_SmoothingSpeed: 16
-  m_ReturnToInitialPosition: 1
-  m_ApplyIfChildIsTarget: 1
-  m_ClampToMaxDistance: 1
-  m_MaxDistance: 20
-  m_PokeFilter: {fileID: 0}
 --- !u!65 &4510171898983206748
 BoxCollider:
   m_ObjectHideFlags: 0

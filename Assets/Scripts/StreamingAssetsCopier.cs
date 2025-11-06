@@ -42,7 +42,7 @@ public class StreamingAssetsCopier : MonoBehaviour
             Directory.CreateDirectory(targetFolder);
 
         foreach (string fileName in new string[] { "demoa_preview.png",  "demob_preview.png", "mylauncher_preview.png",
-        "leclick_logo.png","logofinancial_demoa.png", "interreg_logo.png"}) // liste des fichiers
+        "leclick_logo.png","logofinancial_demoa.png", "interreg_logo.png", "technocite_logo.png"}) // liste des fichiers steamingassets
         {
             string srcPath = Path.Combine(sourceFolder, fileName);
             string dstPath = Path.Combine(targetFolder, fileName);
